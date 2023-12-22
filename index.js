@@ -31,6 +31,7 @@ async function run() {
         // await client.connect();
         const database = client.db("todoDndDB");
         const usersCollection = database.collection("users");
+        const todoItemsCollection = database.collection("todoItems");
 
 
         /* ===================================================
@@ -47,6 +48,87 @@ async function run() {
 
             const result = await usersCollection.insertOne(user);
             res.send(result);
+        })
+
+        /* ===================================================
+                        todo
+        ===================================================*/
+
+
+        app.get("/tasks", async (req, res) => {
+            const email = req.query.email;
+            // console.log(email);
+            const taskFilter = { email: email };
+            const result = await todoItemsCollection.find(taskFilter).toArray();
+            res.status(200).send(result);
+        })
+        app.get("/task/:id", async (req, res) => {
+            const _id = req.params.id;
+            // console.log(_id);
+            const taskFilter = { _id: new ObjectId(_id) };
+            const result = await todoItemsCollection.findOne(taskFilter);
+            res.status(200).send(result);
+        })
+
+        app.post("/task", async (req, res) => {
+            const body = req.body;
+            const result = await todoItemsCollection.insertOne(body);
+            if (result.insertedId.toString().length)
+                return res.send({ success: true });
+            else
+                return res.send({ success: false });
+        })
+
+        app.patch("/task", async (req, res) => {
+            const body = req.body;
+            // console.log(body);
+            const taskFilter = { _id: new ObjectId(body._id) };
+
+            const updateTask = {
+                $set: {
+                    name: body.name,
+                    desc: body.desc,
+                    status: body.status,
+                    priority: body.priority,
+                    email: body.email
+                },
+            };
+
+            const result = await todoItemsCollection.updateOne(taskFilter, updateTask);
+            if (result.modifiedCount)
+                return res.send({ success: true });
+            else
+                return res.send({ success: false });
+        })
+
+        app.patch("/task", async (req, res) => {
+            const body = req.body;
+            // console.log(body);
+            const taskFilter = { _id: new ObjectId(body._id) };
+
+            const updateTask = {
+                $set: {
+                    status: body.status
+                },
+            };
+
+            const result = await todoItemsCollection.updateOne(taskFilter, updateTask);
+            if (result.modifiedCount)
+                return res.send({ success: true });
+            else
+                return res.send({ success: false });
+        })
+
+        app.delete("/task/:id", async (req, res) => {
+            const id = req.params.id;
+
+            const taskFilter = { _id: new ObjectId(id) };
+
+            const result = await todoItemsCollection.deleteOne(taskFilter);
+            if (result.deletedCount)
+                return res.send({ success: true });
+            else
+                return res.send({ success: false });
         })
 
 
